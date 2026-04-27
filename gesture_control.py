@@ -6,16 +6,10 @@ mp_hands = mp.solutions.hands
 mp_draw = mp.solutions.drawing_utils
 
 # Initialize mediapipe hand solution once
-hands = mp_hands.Hands(
-    max_num_hands=1,
-    min_detection_confidence=0.6,
-    min_tracking_confidence=0.6
-)
+hands = mp_hands.Hands(max_num_hands=1, min_detection_confidence=0.7)
 
-# Start webcam with smaller resolution (faster)
+# Start webcam
 cap = cv2.VideoCapture(0)
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)   # lower resolution for speed
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
 def get_direction():
     """
@@ -27,13 +21,10 @@ def get_direction():
         return None
 
     frame = cv2.flip(frame, 1)
-
-    # ↓ Resize before processing for speed (halve size, then scale back results)
-    small_frame = cv2.resize(frame, (320, 240))
-    rgb = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)
+    rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     result = hands.process(rgb)
 
-    h, w, c = small_frame.shape
+    h, w, c = frame.shape
     direction = None
 
     if result.multi_hand_landmarks:
@@ -42,7 +33,10 @@ def get_direction():
             x = int(handLms.landmark[4].x * w)
             y = int(handLms.landmark[4].y * h)
 
+            
+
             # Decide direction based on region
+            
             if x < w * 0.33:
                 direction = 'left'
             elif x > w * 0.66:
@@ -52,10 +46,9 @@ def get_direction():
             elif y > h * 0.66:
                 direction = 'down'
 
-            # Draw landmarks on original frame (optional)
             mp_draw.draw_landmarks(frame, handLms, mp_hands.HAND_CONNECTIONS)
 
-    # Show camera window (optional)
+   
     cv2.imshow("Gesture Control", frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         return 'quit'
